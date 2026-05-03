@@ -42,7 +42,7 @@ typedef struct __attribute__((packed)) {
     uint64_t p_paddr;
     uint64_t p_filesz;
     uint64_t p_memsz;
-    uint32_t p_align;
+    uint64_t p_align;
 
 } program_header;
 

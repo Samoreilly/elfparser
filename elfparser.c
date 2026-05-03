@@ -63,18 +63,22 @@ int program_table(FILE* file, elf_header* header) {
     
     program_header* program = (program_header*) malloc(sizeof(program_header));
    
-    fread(program, sizeof(program_header), 1, file);
-    
-    printf("\e[31m%s", "\n\nProgram header table\n\n\e[0m");
+    for(int i = 0;i < header->e_phnum;i++) {
 
-    printf("p_type: %x\n", program->p_type);
-    printf("p_flags: %x\n", program->p_flags);
-    printf("p_offset: %lx\n", program->p_offset);
-    printf("p_vaddr: %lx\n", program->p_vaddr);
-    printf("p_paddr: %lx\n", program->p_paddr);
-    printf("p_filesz: %lx\n", program->p_filesz);
-    printf("p_memsz: %lx\n", program->p_memsz);
-    printf("p_align: 0x%x\n", program->p_align);
+    
+        fread(program, sizeof(program_header), 1, file);
+        
+        printf("\e[31m%s", "\n\nprogram header table\n\n\e[0m");
+
+        printf("p_type: %x\n", program->p_type);
+        printf("p_flags: %x\n", program->p_flags);
+        printf("p_offset: %lx\n", program->p_offset);
+        printf("p_vaddr: %lx\n", program->p_vaddr);
+        printf("p_paddr: %lx\n", program->p_paddr);
+        printf("p_filesz: %lx\n", program->p_filesz);
+        printf("p_memsz: %lx\n", program->p_memsz);
+        printf("p_align: 0x%lx\n", program->p_align);
+    }
 
     free(program);
 
