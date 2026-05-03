@@ -1,10 +1,11 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <inttypes.h>
+
 /*
     https://en.wikipedia.org/wiki/Executable_and_Linkable_Format
 */
-
 
 //__attribute__((packed)) removed padding between members
 
@@ -22,7 +23,7 @@ typedef struct __attribute__((packed)) {
     uint64_t e_entry; //entry point of processes instructions
     uint64_t e_phoff; //header table pointer
     uint64_t e_shoff; //section header table
-    uint32_t flags; 
+    uint32_t e_flags; 
     uint16_t e_ehsize; // size of header
     uint16_t e_phentsize;// size of program header table
     uint16_t e_phnum; //number of entries in program header table
@@ -34,4 +35,6 @@ typedef struct __attribute__((packed)) {
 
 
 void elfparser(FILE* file);
+bool validate_magicnumber(elf_header* header);
+
 
