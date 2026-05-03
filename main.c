@@ -14,7 +14,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    elfparser(out);
+    if(elfparser(out) != 0) {
+        return 1;
+    }
 
 
     return 0;

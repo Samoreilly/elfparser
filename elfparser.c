@@ -1,10 +1,12 @@
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
 #include "elfparser.h"
 
-void elfparser(FILE* file) {
+int elfparser(FILE* file) {
 
     void* header = malloc(sizeof(elf_header));
 
@@ -14,10 +16,10 @@ void elfparser(FILE* file) {
 
     if(!validate_magicnumber(h)) {
         printf("Invalid magic number");
-        return;
+        return 1;
     }
 
-    printf("\n\nElf Header Information:\n\n");
+    printf("\e[31m\n\nElf Header Information:\n\n\e[0m");
 
     printf("magic: %i\n", h->magic);
     printf("e_class: %i\n", h->ei_class);
@@ -42,10 +44,44 @@ void elfparser(FILE* file) {
     printf("e_shnum: %i\n", h->e_shnum);
     printf("e_shstrndx: %i\n", h->e_shstrndx);
     
+    int sig = program_table(file, h);
+    if(sig != 0) return 1;
 
+    free(header);
 
     fclose(file);
+
+    return 0;
 }
+
+int program_table(FILE* file, elf_header* header) {
+
+    if(fseek(file, header->e_phoff, SEEK_SET) != 0) {
+        fclose(file);
+        return 1;
+    }
+    
+    program_header* program = (program_header*) malloc(sizeof(program_header));
+   
+    fread(program, sizeof(program_header), 1, file);
+    
+    printf("\e[31m%s", "\n\nProgram header table\n\n\e[0m");
+
+    printf("p_type: %x\n", program->p_type);
+    printf("p_flags: %x\n", program->p_flags);
+    printf("p_offset: %lx\n", program->p_offset);
+    printf("p_vaddr: %lx\n", program->p_vaddr);
+    printf("p_paddr: %lx\n", program->p_paddr);
+    printf("p_filesz: %lx\n", program->p_filesz);
+    printf("p_memsz: %lx\n", program->p_memsz);
+    printf("p_align: 0x%x\n", program->p_align);
+
+    free(program);
+
+    return 0;
+    
+}
+
 
 //format 0x7F 45 4c 46
 bool validate_magicnumber(elf_header* header) {
