@@ -63,6 +63,8 @@ typedef struct __attribute__((packed)) {
 
 int elfparser(FILE* file);
 
+char* get_string_table(FILE* file, elf_header* header);
+char* get_section_name(FILE* file, char* string_table, section_header* section_header);
 int program_table(FILE* file, elf_header* header);
 int section_header_table(FILE* file, elf_header* header);
 

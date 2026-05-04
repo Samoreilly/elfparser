@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <unistd.h>
 
 #include "elfparser.h"
 
@@ -47,7 +48,7 @@ int elfparser(FILE* file) {
     int program_sig = program_table(file, h);
     int section_sig = section_header_table(file, h);
 
-    if(program_sig != 0 && section_sig != 0) return 1;
+    if(program_sig != 0 || section_sig != 0) return 1;
     
     free(h);
     fclose(file);
@@ -77,13 +78,45 @@ int program_table(FILE* file, elf_header* header) {
         printf("p_paddr: %lx\n", program->p_paddr);
         printf("p_filesz: %lx\n", program->p_filesz);
         printf("p_memsz: %lx\n", program->p_memsz);
-        printf("p_align: 0x%lx\n", program->p_align);
-    
+        printf("p_align: 0x%lx\n", program->p_align);    
+
+        printf("\n");
     }
 
     free(program);
 
     return 0;    
+}
+
+char* get_string_table(FILE* file, elf_header* header) {
+
+    fseek(file, header->e_shoff + (header->e_shstrndx * header->e_shentsize), SEEK_SET);
+    
+    section_header* section_names = (section_header*) malloc(sizeof(section_header));
+    
+    //read the string table in
+    fread(section_names, sizeof(section_header), 1, file);
+
+    char* string_table = (char*) malloc(section_names->sh_size);
+   
+    fseek(file, section_names->sh_offset, SEEK_SET); 
+    fread(string_table, section_names->sh_size, 1, file);
+
+    return string_table;
+}
+
+char* get_section_name(FILE* file, char* string_table, section_header* section) {
+   
+    char* res = malloc(64); 
+    char* dest = res;
+    char* src = (string_table + section->sh_name);
+    
+    while(*src != '\0') {
+        *dest++ = *src++;
+    }
+
+    *dest = '\0';
+    return res;
 }
 
 int section_header_table(FILE* file, elf_header* header) {
@@ -93,6 +126,13 @@ int section_header_table(FILE* file, elf_header* header) {
         return 1;
     }
 
+    //string table
+    
+    long offset = ftell(file);
+    char* string_table = get_string_table(file, header);
+    
+    fseek(file, offset, SEEK_SET);
+
     section_header* section = (section_header*) malloc(sizeof(section_header));
 
     printf("\e[31m%s", "\n\nSection Header Table\n\n\e[0m");
@@ -100,6 +140,11 @@ int section_header_table(FILE* file, elf_header* header) {
     for(int i = 0;i < header->e_shnum;i++) {
 
         fread(section, sizeof(section_header), 1, file);
+        
+        char* section_name = get_section_name(file, string_table, section);
+
+        printf("\e[31m Section Name: %s\e[0m\n", section_name);
+        free(section_name);
 
         printf("sh_name: %x\n", section->sh_name);
         printf("sh_type: %x\n", section->sh_type);
@@ -114,6 +159,7 @@ int section_header_table(FILE* file, elf_header* header) {
 
         printf("\n\n");
 
+        
     }
 
     free(section);
