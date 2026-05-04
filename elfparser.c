@@ -44,11 +44,12 @@ int elfparser(FILE* file) {
     printf("e_shnum: %i\n", h->e_shnum);
     printf("e_shstrndx: %i\n", h->e_shstrndx);
     
-    int sig = program_table(file, h);
-    if(sig != 0) return 1;
+    int program_sig = program_table(file, h);
+    int section_sig = section_header_table(file, h);
 
-    free(header);
-
+    if(program_sig != 0 && section_sig != 0) return 1;
+    
+    free(h);
     fclose(file);
 
     return 0;
@@ -63,12 +64,11 @@ int program_table(FILE* file, elf_header* header) {
     
     program_header* program = (program_header*) malloc(sizeof(program_header));
    
+    printf("\e[31m%s", "\n\nProgram Header Table\n\n\e[0m");
+
     for(int i = 0;i < header->e_phnum;i++) {
 
-    
         fread(program, sizeof(program_header), 1, file);
-        
-        printf("\e[31m%s", "\n\nprogram header table\n\n\e[0m");
 
         printf("p_type: %x\n", program->p_type);
         printf("p_flags: %x\n", program->p_flags);
@@ -78,23 +78,56 @@ int program_table(FILE* file, elf_header* header) {
         printf("p_filesz: %lx\n", program->p_filesz);
         printf("p_memsz: %lx\n", program->p_memsz);
         printf("p_align: 0x%lx\n", program->p_align);
+    
     }
 
     free(program);
 
-    return 0;
-    
+    return 0;    
 }
 
+int section_header_table(FILE* file, elf_header* header) {
+
+    if(fseek(file, header->e_shoff, SEEK_SET) != 0) {
+        fclose(file);
+        return 1;
+    }
+
+    section_header* section = (section_header*) malloc(sizeof(section_header));
+
+    printf("\e[31m%s", "\n\nSection Header Table\n\n\e[0m");
+
+    for(int i = 0;i < header->e_shnum;i++) {
+
+        fread(section, sizeof(section_header), 1, file);
+
+        printf("sh_name: %x\n", section->sh_name);
+        printf("sh_type: %x\n", section->sh_type);
+        printf("sh_flags: %lx\n", section->sh_flags);
+        printf("sh_addr: %lx\n", section->sh_addr);
+        printf("sh_offset: %lx\n", section->sh_offset);
+        printf("sh_size %lx\n", section->sh_size);
+        printf("sh_link: %x\n", section->sh_link);
+        printf("sh_info: %x\n", section->sh_info);
+        printf("sh_addralign: %lx\n", section->sh_addralign);
+        printf("sh_entsize: %lx\n", section->sh_entsize);
+
+        printf("\n\n");
+
+    }
+
+    free(section);
+    
+    return 0;
+}
 
 //format 0x7F 45 4c 46
 bool validate_magicnumber(elf_header* header) {
+
     uint8_t magic[4] = { 0x7F, 'E', 'L', 'F' };
 
-
     for (int i = 0; i < 4; i++) { 
-        uint8_t segment = (header->magic >> (i * 8)) & 0xFF;
-        
+        uint8_t segment = (header->magic >> (i * 8)) & 0xFF;     
         if (segment != magic[i]) return false;
     }
 
